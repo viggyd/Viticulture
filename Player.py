@@ -8,6 +8,7 @@ from Wine import Wine
 import copy
 import collections
 import pprint
+import random
 
 def GrapeMapFromGrapes(Grapes):
 
@@ -64,7 +65,7 @@ def NeedIsFulfilled(Order, Crush):
     WinesInOrder = Order.GetWines()
 
     # Separate into different arrays based on type needed to fill
-    RedWhiteWines = [x for x in WinesInOrder if x.GetType() == WineType.RED or x.GetType == WineType.WHITE]
+    RedWhiteWines = [x for x in WinesInOrder if x.GetType() == WineType.RED or x.GetType() == WineType.WHITE]
     BlushWines = [x for x in WinesInOrder if x.GetType() == WineType.BLUSH]
     SparklingWines = [x for x in WinesInOrder if x.GetType() == WineType.SPARKLING]
 
@@ -169,6 +170,97 @@ def RemoveSuboptimalPaths(HarvestPaths):
 
 
 
+def DetermineCriticalHarvests(HarvestPaths, Order):
+
+    CriticalHarvests = []
+
+    for Path in HarvestPaths:
+
+
+        # Create an array of copies of paths.
+        CriticalHarvestsInYear = []
+        for i in range(len(Path)):
+
+            TestPath = copy.deepcopy(Path)
+            TestPath[i] = -1
+
+            CPad = CrushPad()
+
+            for Year in TestPath:
+
+                if Year == -1:
+                    CPad.AgeCrushPad()
+                    continue
+
+                # Harvest field, add grapes to crush pad, then age.
+                Grapes = FieldMap[Year].HarvestField(True)
+                CPad.AddGrapes(Grapes)
+                CPad.AgeCrushPad()
+
+            # At the end, see if the need is still fulfilled.
+            # Basically, if need is fulfilled, the harvest isn't critical, hence the not in front.
+            CriticalHarvestsInYear.append(not NeedIsFulfilled(Order, CPad))
+
+        Test = list(zip(copy.deepcopy(Path), CriticalHarvestsInYear))
+        CriticalHarvests.append(Test)
+
+
+
+    return CriticalHarvests
+
+
+
+def ChoosePath(CriticalHarvests):
+
+
+    # Count the number of critical harvests
+    TotalCriticals = [[x[1] for x in y] for y in CriticalHarvests]
+
+    # Add them all up
+    TotalCriticals = [sum(x) for x in TotalCriticals]
+
+    # Determine fewest number of critical harvest from all options
+    MinCritical = min(TotalCriticals)
+
+    # Get only indices where we meet the minimum critical
+    TotalCriticals = [i for i, x in enumerate(TotalCriticals, 1) if x == MinCritical]
+    # TotalCriticals = [x for x in TotalCriticals if x == MinCritical]
+
+    # Okay, now we want to minimize the final critical harvest. That is, if we have two critical harvests,
+    # We want them to be as early as possible. So [1 1 0 0] is preferable to [1 0 1 0].
+    MinCriticalPaths = [x for i, x in enumerate(CriticalHarvests, 1) if i in TotalCriticals]
+
+    # Determine indices with critical harvests
+    CriticalIndices = [[i for i, x in enumerate(y, 1) if x[1]] for y in MinCriticalPaths]
+
+    # Foreach of the paths, determine the maximum year the critical harvest occurs
+    MaxCriticalHarvest = [max(x) for x in CriticalIndices]
+
+    # Determine the least upper bound (min of all maxes, i.e. the least of all evils)
+    SupremumCritical = min(MaxCriticalHarvest)
+
+    # Now, take all those paths that meet the minimum
+    FinalCandidateIndices = [i for i, x in enumerate(MaxCriticalHarvest) if x == SupremumCritical]
+
+    # Determine final list of candidates by making sure the selected indices can be found in the pool
+    FinalCandidates = [x for i, x in enumerate(MinCriticalPaths) if i in FinalCandidateIndices]
+
+    # I've run out of heuristics at the moment. If we really don't have anything better, pick randomly.
+    # At this point, they are equal.
+    # Get a random one since it doesn't really matter at this point.
+    Index = random.randint(1, len(FinalCandidates))
+
+
+    return FinalCandidates[Index]
+
+
+
+
+
+
+
+
+
 
 
 def EstimateYears(Order, CPad, Cellar, FieldMap):
@@ -202,39 +294,25 @@ def EstimateYears(Order, CPad, Cellar, FieldMap):
     # So now we have the numbers we need.
     print("Number of red grapes needed: {0:d}\nNumber of white grapes needed: {1:d}".format(NumRed, NumWhite))
 
-    print("break")
-
-    ImaginaryCrush = CrushPad()
-    ImaginaryCellar = WineCellar()
-
-    OrderFulfilled = False
-    NumYears = 0
 
     HarvestPaths = []
     DetermineBestPath(Order, CPad, FieldMap, HarvestPaths)
     HarvestPaths = RemoveSuboptimalPaths(HarvestPaths)
-    pp = pprint.PrettyPrinter(indent=2)
-    pp.pprint(HarvestPaths)
+    CriticalHarvests = DetermineCriticalHarvests(HarvestPaths, Order)
+    CurrentPath = ChoosePath(CriticalHarvests)
 
-    # Keep going until we can fill the order
-    # while not OrderFulfilled:
-    #
-    #     # Harvest a field
-    #
-    #     # Make two wines (optional)
-    #
-    #     # Increment number of years it'll take
-    #     NumYears += 1
+    return CurrentPath
 
 
-
-
+def DetermineYearToDrawNewOrder(CurrentPath):
+    pass
 
 
 
 
 if __name__ == '__main__':
 
+    pp = pprint.PrettyPrinter(indent=2)
 
     # Set up our game.
     # We will be starting with a full field...
@@ -263,12 +341,17 @@ if __name__ == '__main__':
 
     # Okay, so we now have our objective. What now?
     # We play the game. Let's try to estimate how many years it'll take to fulfill this order
-    EstimateYears(CurrentWineOrder, CPad, Cellar, FieldMap)
+    CurrentPath = EstimateYears(CurrentWineOrder, CPad, Cellar, FieldMap)
+
+    print("Number of years to complete objective: {0:d}".format(len(CurrentPath)))
+    pp.pprint(CurrentPath)
 
 
-
-
-
-
+    ChoosePath(
+        [
+        [(FieldType.LARGE, True), (FieldType.MEDIUM, False), (FieldType.LARGE, True), (FieldType.MEDIUM, False)],
+        [(FieldType.LARGE, True), (FieldType.LARGE, True), (FieldType.MEDIUM, False), (FieldType.MEDIUM, False)]
+        ]
+    )
 
 
