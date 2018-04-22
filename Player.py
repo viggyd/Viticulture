@@ -10,6 +10,12 @@ import collections
 import pprint
 import random
 
+# Hello!
+# You will note that there is a lot of list comprehension going on here.
+# I am as of yet unsure of how this will affect the final simulations.
+# But it's always better to optimize later as needed.
+
+
 def GrapeMapFromGrapes(Grapes):
 
     GrapeMap = collections.defaultdict(list)
@@ -20,27 +26,7 @@ def GrapeMapFromGrapes(Grapes):
     return GrapeMap
 
 
-def GetNumRedWhiteGrapeFromOrder(Order):
 
-    NumFillNeeds = {
-        GrapeType.RED : 0,
-        GrapeType.WHITE : 0
-    }
-
-    for Bottle in Order.GetWines():
-
-        if Bottle.GetType() == WineType.RED:
-            NumFillNeeds[GrapeType.RED] += 1
-        elif Bottle.GetType() == WineType.WHITE:
-            NumFillNeeds[GrapeType.WHITE] += 1
-        elif Bottle.GetType() == WineType.BLUSH:
-            NumFillNeeds[GrapeType.RED] += 1
-            NumFillNeeds[GrapeType.WHITE] += 1
-        elif Bottle.GetType() == WineType.SPARKLING:
-            NumFillNeeds[GrapeType.RED] += 2
-            NumFillNeeds[GrapeType.WHITE] += 1
-
-    return NumFillNeeds
 
 def NeedIsFulfilled(Order, Crush):
 
@@ -49,7 +35,7 @@ def NeedIsFulfilled(Order, Crush):
     Grapes = Crush.GetGrapes()
 
     CrushMap = GrapeMapFromGrapes(Grapes)
-    NumNeeded = GetNumRedWhiteGrapeFromOrder(Order)
+    NumNeeded = Order.GetNumRedWhiteGrapes()
 
     # Sanity check. If we don't have the right number of each type, we may as well give up now.
     for Key, Val in NumNeeded.items():
@@ -60,7 +46,6 @@ def NeedIsFulfilled(Order, Crush):
 
 
     NumFulfilled = 0
-
 
     WinesInOrder = Order.GetWines()
 
@@ -77,23 +62,64 @@ def NeedIsFulfilled(Order, Crush):
 
             # See if it is in the crush map
             GrapeArray = CrushMap[Bottle.GetType()]
+
+            # Get all grapes that satisfy the condition
             TestFill = [x for x in GrapeArray if x >= Bottle.GetGrade()]
 
-            # We can't fill it if we can't fill this one.
+            # If we have no grapes that meet the condition, the need is not yet met.
             if not TestFill:
                 return False
 
-            # 'Remove' from our crush pad and increment number of wines filled
+            # Remove the grape from our crush pad and increment number of fulfilled wines in the order.
             CrushMap[Bottle.GetType()].remove(min(TestFill))
             NumFulfilled += 1
 
 
-    for Bottle in BlushWines:
-        pass
-
-
+    # We're going to do something tricky here. We aren't actually going to 'solve' the
+    # sparkling need. We know that a sparkling is 2R-1W. Which is just an additional
+    # Red away from a blush. Well, what we can do is remove the minimum reds from the
+    # red crush map and pretend that all the rest are actually blush. It takes a bit more
+    # processing to do, but we'll see. I can't think of a better way to do this...
+    #
+    # NOTE: This may not be entirely accurate.
     for Bottle in SparklingWines:
+
+        CurrentMinRed = min(CrushMap[GrapeType.RED])
+
+        # Get the would-be blush wine grade and create the new wine based on that grade
+        BlushGrade = Bottle.GetGrade() - CurrentMinRed
+        BlushWine = Wine(WineType.BLUSH, BlushGrade)
+
+        # Add the new blush wine to our list of blush wines
+        BlushWines.append(BlushWine)
+
+        # Remove the min red from our crush pad.
+        CrushMap[GrapeType.RED].remove(CurrentMinRed)
+
+
+    # Now, we just have to figure out how we're going to solve this part. :D
+    # A brute force approach would be to do find all possible combinations for all bottles.
+    # Here's the idea:
+    # Take the smallest grape (including both red and white)
+    # Find the smallest opposite grape that meets the bottle's condition.
+    # If it is found, remove both from the crush pad
+    # If it is not found, try the next min.
+    # Repeat.
+    #
+    # I believe this is the best way to go about this.
+    #
+    for Bottle in BlushWines:
+
+        RedCrush = CrushMap[GrapeType.RED]
+        WhiteCrush = CrushMap[GrapeType.WHITE]
+
+        # Trying to figure out how to solve this is tricky because there are so many combinations.
+        # It almost feels like the sparkling and blush have to be solved at the same time. Hmm.
+
         pass
+
+
+
 
 
 
@@ -141,6 +167,12 @@ def DetermineBestPath(Order, CPad, FieldMap, FullPath, CurrentBranch=0, Years=0,
     if NeedIsFulfilled(Order, CPad):
         if CurrentPath not in FullPath: # Only append if not in paths we already know.
             FullPath.append(CurrentPath)
+        return
+
+    # Break condition
+    # This is used to avoid stack overflows.
+    if Years >= 10:
+        print("ERROR: Unable to determine a path to complete objective. The program has failed.")
         return
 
     # Special case if initial entry
@@ -251,7 +283,7 @@ def ChoosePath(CriticalHarvests):
     Index = random.randint(1, len(FinalCandidates))
 
 
-    return FinalCandidates[Index]
+    return FinalCandidates[Index - 1]
 
 
 

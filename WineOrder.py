@@ -34,6 +34,27 @@ class WineOrder:
 
         return WineMap
 
+    def GetNumRedWhiteGrapes(Order):
+
+        NumFillNeeds = {
+            GrapeType.RED: 0,
+            GrapeType.WHITE: 0
+        }
+
+        for Bottle in Order.GetWines():
+
+            if Bottle.GetType() == WineType.RED:
+                NumFillNeeds[GrapeType.RED] += 1
+            elif Bottle.GetType() == WineType.WHITE:
+                NumFillNeeds[GrapeType.WHITE] += 1
+            elif Bottle.GetType() == WineType.BLUSH:
+                NumFillNeeds[GrapeType.RED] += 1
+                NumFillNeeds[GrapeType.WHITE] += 1
+            elif Bottle.GetType() == WineType.SPARKLING:
+                NumFillNeeds[GrapeType.RED] += 2
+                NumFillNeeds[GrapeType.WHITE] += 1
+
+        return NumFillNeeds
 
     def __repr__(self):
         return self.GetWines().__repr__()
