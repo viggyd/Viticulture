@@ -64,8 +64,8 @@ class CrushPad:
         AllFound = True
         for Item in GrapeArray:
 
-            if self.Crush[Item.GetType()][Item.GetGrade()]:
-                self.Crush[Item.GetType()][Item.GetGrade()] = False
+            if self.Crush[Item.GetType()][Item.GetGrade()-1]:
+                self.Crush[Item.GetType()][Item.GetGrade()-1] = False
             else:
                 AllFound = False
 

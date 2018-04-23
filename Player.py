@@ -22,11 +22,14 @@ import csv
 
 
 
-def NeedIsFulfilled(Order, Crush):
+def NeedIsFulfilled(Order, Crush, UsedGrapes=list()):
 
     # Check if the wine order can be filled based on the crush pad given
     CrushMap = Crush.GetCrushMap()
     NumNeeded = Order.GetNumRedWhiteGrapes()
+
+    # Empty the list
+    UsedGrapes.clear()
 
     # Sanity check. If we don't have the right number of each type, we may as well give up now.
     for Key, Val in NumNeeded.items():
@@ -63,6 +66,9 @@ def NeedIsFulfilled(Order, Crush):
 
             # Remove the grape from our crush pad and increment number of fulfilled wines in the order.
             CrushMap[Bottle.GetType()].remove(min(TestFill))
+
+            UsedGrapes.append(Grape(Bottle.GetType(), min(TestFill)))
+
             NumFulfilled += 1
 
 
@@ -86,6 +92,7 @@ def NeedIsFulfilled(Order, Crush):
 
         # Remove the min red from our crush pad.
         CrushMap[GrapeType.RED].remove(CurrentMinRed)
+        UsedGrapes.append(Grape(GrapeType.RED, CurrentMinRed))
 
 
     # Now, we just have to figure out how we're going to solve this part. :D
@@ -113,10 +120,8 @@ def NeedIsFulfilled(Order, Crush):
             return False
         else:
             NumFulfilled += 1
-
-
-
-
+            UsedGrapes.append(Grape(GrapeType.RED, Item[1][0][GrapeType.RED]))
+            UsedGrapes.append(Grape(GrapeType.WHITE, Item[1][0][GrapeType.WHITE]))
 
     return NumFulfilled == len(Order.GetWines())
 
@@ -234,7 +239,6 @@ def DetermineBestPath(Order, CPad, FieldMap, FullPath, CurrentBranch=0, Years=0,
     # Break condition
     # This is used to avoid stack overflows.
     if Years >= 10:
-        print("ERROR: Unable to determine a path to complete objective. The program has failed.")
         return
 
     # Special case if initial entry
@@ -264,7 +268,7 @@ def RemoveSuboptimalPaths(HarvestPaths):
 
 
 
-def DetermineCriticalHarvests(HarvestPaths, Order):
+def DetermineCriticalHarvests(HarvestPaths, Order, FieldMap):
 
     CriticalHarvests = []
 
@@ -303,7 +307,7 @@ def DetermineCriticalHarvests(HarvestPaths, Order):
     return CriticalHarvests
 
 
-def DetermineNeededHarvests(HarvestPaths, Order):
+def DetermineNeededHarvests(HarvestPaths, Order, FieldMap):
 
     NeededHarvests = []
 
@@ -311,9 +315,11 @@ def DetermineNeededHarvests(HarvestPaths, Order):
 
         NeededHarvestsInPath = []
         OrderFilled = False
+
+        TestPath = copy.deepcopy(Path)
+
         for i in range(1, len(Path)):
 
-            TestPath = copy.deepcopy(Path)
 
             NumSetToZero = len(Path) - i
             TestPath[i:] = [-1] * NumSetToZero
@@ -415,8 +421,20 @@ def EstimateYears(Order, CPad, Cellar, FieldMap):
     HarvestPaths = []
     DetermineBestPath(Order, CPad, FieldMap, HarvestPaths)
     HarvestPaths = RemoveSuboptimalPaths(HarvestPaths)
-    CriticalHarvests = DetermineNeededHarvests(HarvestPaths, Order)
-    DetermineCriticalHarvests(HarvestPaths, Order)
+    CriticalHarvests = DetermineNeededHarvests(HarvestPaths, Order, FieldMap)
+    DetermineCriticalHarvests(HarvestPaths, Order, FieldMap)
+    CurrentPath = ChoosePath(CriticalHarvests)
+
+    return CurrentPath
+
+
+def GetPathForObjective(Order, CPad, Cellar, FieldMap):
+
+    HarvestPaths = []
+    DetermineBestPath(Order, CPad, FieldMap, HarvestPaths)
+    HarvestPaths = RemoveSuboptimalPaths(HarvestPaths)
+    CriticalHarvests = DetermineNeededHarvests(HarvestPaths, Order, FieldMap)
+    DetermineCriticalHarvests(HarvestPaths, Order, FieldMap)
     CurrentPath = ChoosePath(CriticalHarvests)
 
     return CurrentPath
@@ -437,7 +455,7 @@ def ConstructWineDeck(FilePath):
         for row in WineReader:
 
             Wines = WineListFromTextFile(row['wines'])
-            WineDeck.append(WineOrder(Wines, row['vp'], row['residual']))
+            WineDeck.append(WineOrder(Wines, int(row['vp']), int(row['residual'])))
 
     return WineDeck
 
@@ -451,7 +469,7 @@ def WineListFromTextFile(WineListStr):
     Wines = []
     for Item in WineArray:
 
-        Grade = Item[0]
+        Grade = int(Item[0])
         Type = Item[1]
         WType = WineType.RED
 
@@ -470,9 +488,11 @@ def WineListFromTextFile(WineListStr):
 
 
 
-if __name__ == '__main__':
 
-    pp = pprint.PrettyPrinter(indent=2)
+
+
+
+def Play():
 
     # Set up our game.
     # We will be starting with a full field...
@@ -488,17 +508,7 @@ if __name__ == '__main__':
     MField.SetField(RedGrade=3, WhiteGrade=3)
     LField.SetField(RedGrade=4, WhiteGrade=3)
 
-
     WineDeck = ConstructWineDeck("WineOrderDefPython.csv")
-
-
-
-    # WineList = [Wine(WineType.RED, 7), Wine(WineType.WHITE, 6)] # Expected 2 years from empty
-
-    WineList = [Wine(WineType.BLUSH, 9), Wine(WineType.RED, 6), Wine(WineType.WHITE, 6)]
-
-    CurrentWineOrder = WineOrder(WineList, 6, 2)
-
 
     FieldMap = {
         FieldType.SMALL : SField,
@@ -506,19 +516,120 @@ if __name__ == '__main__':
         FieldType.LARGE : LField
     }
 
-    # Okay, so we now have our objective. What now?
-    # We play the game. Let's try to estimate how many years it'll take to fulfill this order
-    CurrentPath = EstimateYears(CurrentWineOrder, CPad, Cellar, FieldMap)
 
-    print("Number of years to complete objective: {0:d}".format(len(CurrentPath) + 1))
-    pp.pprint(CurrentPath)
+    CurrentVP = 0
+    YearsPassed = 0
+
+    ObjectiveSet = False
+    CurrentObjective = None
+    NextObjective = None
+    HarvestPath = []
+
+    while CurrentVP < 20:
+
+        # If we do not have a current objective, pick one up.
+        if not ObjectiveSet:
+            CurrentObjective = random.choice(WineDeck)
+            WineDeck.remove(CurrentObjective)
 
 
-    # ChoosePath(
-    #     [
-    #     [(FieldType.LARGE, True), (FieldType.MEDIUM, False), (FieldType.LARGE, True), (FieldType.MEDIUM, False)],
-    #     [(FieldType.LARGE, True), (FieldType.LARGE, True), (FieldType.MEDIUM, False), (FieldType.MEDIUM, False)]
-    #     ]
-    # )
+            # Get the path we need to take to meet the objective.
+            Path = GetPathForObjective(CurrentObjective, CPad, Cellar, FieldMap)
+
+
+            # This can happen if we cannot fulfill the order. Just increment the year and move on.
+            if not Path:
+                YearsPassed += 1
+                continue
+
+            ObjectiveSet = True
+
+
+            HarvestPath = Path
+
+
+        # Harvest the next field.
+        (FieldToHarvest, IsCritical) = HarvestPath.pop(0)
+
+        # Harvest and add to the Crush pad
+        GrapesFromField = FieldMap[FieldToHarvest].HarvestField()
+        CPad.AddGrapes(GrapesFromField)
+
+        # See if our need is fulfilled.
+        UsedGrapes = []
+        if NeedIsFulfilled(CurrentObjective, CPad, UsedGrapes):
+
+            # Remove the grapes that we are using from the crush pad.
+            CPad.RemoveGrapes(UsedGrapes)
+
+            # Increase our number of victory points
+            CurrentVP += CurrentObjective.GetVP()
+
+            # Reset out objective
+            CurrentObjective = NextObjective if NextObjective is not None else None
+            ObjectiveSet = CurrentObjective is not None
+
+        elif not IsCritical and NextObjective is None:
+            print("got here")
+
+
+
+
+        CPad.AgeCrushPad()
+
+        YearsPassed += 1
+
+
+
+
+
+
+
+if __name__ == '__main__':
+
+    pp = pprint.PrettyPrinter(indent=2)
+
+    Play()
+
+    #
+    # # Set up our game.
+    # # We will be starting with a full field...
+    # SField = Field(5)
+    # MField = Field(6)
+    # LField = Field(7)
+    #
+    # Cellar = WineCellar()
+    # CPad = CrushPad()
+    #
+    # # For now, we'll hard code our initial conditions,
+    # # but eventually, we'll be setting these parametrically
+    # MField.SetField(RedGrade=3, WhiteGrade=3)
+    # LField.SetField(RedGrade=4, WhiteGrade=3)
+    #
+    #
+    # WineDeck = ConstructWineDeck("WineOrderDefPython.csv")
+    #
+    #
+    #
+    # # WineList = [Wine(WineType.RED, 7), Wine(WineType.WHITE, 6)] # Expected 2 years from empty
+    #
+    # WineList = [Wine(WineType.BLUSH, 9), Wine(WineType.RED, 6), Wine(WineType.WHITE, 6)]
+    #
+    # CurrentWineOrder = WineOrder(WineList, 6, 2)
+    #
+    #
+    # FieldMap = {
+    #     FieldType.SMALL : SField,
+    #     FieldType.MEDIUM : MField,
+    #     FieldType.LARGE : LField
+    # }
+    #
+    # # Okay, so we now have our objective. What now?
+    # # We play the game. Let's try to estimate how many years it'll take to fulfill this order
+    # CurrentPath = EstimateYears(CurrentWineOrder, CPad, Cellar, FieldMap)
+    #
+    # print("Number of years to complete objective: {0:d}".format(len(CurrentPath) + 1))
+    # pp.pprint(CurrentPath)
+
 
 
