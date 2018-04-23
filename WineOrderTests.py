@@ -144,15 +144,79 @@ class TestCrushPadSuite(unittest.TestCase):
         self.assertEqual(TestPad, CPad.Crush[0])
 
 
+class TestBlushGenerateSolutions(unittest.TestCase):
+
+    def test_generate_sols(self):
+
+        Crush = CrushPad()
+
+        Crush.AddGrape(GrapeType.RED, 2)
+        Crush.AddGrape(GrapeType.RED, 3)
+        Crush.AddGrape(GrapeType.WHITE, 3)
+        Crush.AddGrape(GrapeType.WHITE, 4)
+
+        CrushMap = Crush.GetCrushMap()
+        WineBottle = Wine(WineType.BLUSH, 5)
+
+        Sols = GenerateBlushSolutions(WineBottle, CrushMap)
+
+        ExpSols = [
+            {GrapeType.RED: 2, GrapeType.WHITE: 3},
+            {GrapeType.RED: 2, GrapeType.WHITE: 4},
+            {GrapeType.RED: 3, GrapeType.WHITE: 3},
+            {GrapeType.RED: 3, GrapeType.WHITE: 4}
+        ]
+
+        self.assertEqual(Sols, ExpSols)
+
+        WineBottle = Wine(WineType.BLUSH, 6)
+
+        Sols = GenerateBlushSolutions(WineBottle, CrushMap)
+
+        ExpSols = [
+            {GrapeType.RED: 2, GrapeType.WHITE: 4},
+            {GrapeType.RED: 3, GrapeType.WHITE: 3},
+            {GrapeType.RED: 3, GrapeType.WHITE: 4}
+        ]
+
+        self.assertEqual(Sols, ExpSols)
+
+
+    def test_multiple_in_order(self):
+
+        Crush = CrushPad()
+
+        Crush.AddGrape(GrapeType.RED, 2)
+        Crush.AddGrape(GrapeType.RED, 3)
+        Crush.AddGrape(GrapeType.WHITE, 3)
+        Crush.AddGrape(GrapeType.WHITE, 4)
+
+        CrushMap = Crush.GetCrushMap()
+        Order = WineOrder([Wine(WineType.BLUSH, 5), Wine(WineType.BLUSH, 6)], 5, 2)
+        BlushWines = [Wine(WineType.BLUSH, 5), Wine(WineType.BLUSH, 6)]
+
+
+
+        BlushSolutions = []
+        for Bottle in BlushWines:
+            BlushSolutions.append([Bottle, GenerateBlushSolutions(Bottle, CrushMap)])
+
+        SolveBlushWines(BlushSolutions)
+        print("done")
+
+
+
 if __name__ == '__main__':
 
 
     suite = unittest.TestSuite()
 
+    suite.addTests(unittest.TestLoader().loadTestsFromTestCase((TestBlushGenerateSolutions)))
     suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestWineOrderFulfill))
     suite.addTests(unittest.TestLoader().loadTestsFromTestCase((TestGrapeSorting)))
     suite.addTests(unittest.TestLoader().loadTestsFromTestCase((TestCellarSuite)))
     suite.addTests(unittest.TestLoader().loadTestsFromTestCase((TestCrushPadSuite)))
+
 
     unittest.TextTestRunner(verbosity=3).run(suite)
 

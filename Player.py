@@ -99,53 +99,124 @@ def NeedIsFulfilled(Order, Crush):
     #
     # I believe this is the best way to go about this.
     #
+
+    # First, generate all possible solutions for the bottles.
+    BlushSolutions = []
     for Bottle in BlushWines:
+        BlushSolutions.append([Bottle, GenerateBlushSolutions(Bottle, CrushMap)])
 
-        RedCrush = CrushMap[GrapeType.RED]
-        WhiteCrush = CrushMap[GrapeType.WHITE]
+    SolveBlushWines(BlushSolutions)
 
-        # Trying to figure out how to solve this is tricky because there are so many combinations.
-        # It almost feels like the sparkling and blush have to be solved at the same time. Hmm.
+    for Item in BlushSolutions:
 
-        pass
-
-
-
-
+        if not Item[1]:
+            return False
+        else:
+            NumFulfilled += 1
 
 
-        # for j, Item in enumerate(Grapes):
-        #
-        #     if Item.MeetsGrade(Bottle.GetType(), Bottle.GetGrade()):
-        #         GrapeFound = True
-        #         GrapeRemove = j
-        #         break
-        #
-        # if GrapeFound:
-        #     NumFulfilled += 1
-        #     del Grapes[GrapeRemove]
-        #     GrapeFound = False
-        #     GrapeRemove = -1
-        # else:
-        #     return False
+
+
 
     return NumFulfilled == len(Order.GetWines())
 
-    # If we only have basic types and we're done, return now. Yay
-    # if len(Order) == 0:
-    #     return True
-
-
-
-    # For blush/sparkling, it is easier to use a dictionary with lists of red/white.
 
 
 
 
+def GenerateBlushSolutions(WineBottle, CrushMap):
+
+    AllSolutions = []
+
+    for RedGrade in CrushMap[GrapeType.RED]:
+        for WhiteGrade in CrushMap[GrapeType.WHITE]:
+
+            if RedGrade + WhiteGrade >= WineBottle.GetGrade():
+
+                AllSolutions.append(
+                    {
+                        GrapeType.RED : RedGrade,
+                        GrapeType.WHITE : WhiteGrade
+                    }
+                )
+
+    return AllSolutions
 
 
-    pass
 
+def SolveBlushWines(BlushSolutions):
+
+    # Sort the solutions by the grade.
+    # BlushKeys = sorted(BlushSolutions)
+    BlushKeys = sorted([x[0] for x in BlushSolutions])
+    FinishedBlush = []
+
+
+    for i, Bottle in enumerate(BlushKeys):
+
+        CurrentItem = BlushSolutions[i]
+        CurrentSol = CurrentItem[1]
+
+        # If we have no solution set, we're done.
+        if not CurrentSol:
+            return
+
+
+        CopySol = copy.deepcopy(CurrentSol)
+        Choice = random.choice(CurrentSol)
+
+
+        for j, SecItem in enumerate(BlushSolutions[i+1:]):
+
+            SecSol = SecItem[1]
+
+            # Remove all elements in CurrentSol that are in SecSol.
+            if i == j:
+                continue
+
+
+            for Item in SecSol:
+
+                if Item in CopySol:
+                    CopySol.remove(Item)
+
+
+        # If we have unique solutions left, use one of those? No. We can't do that.
+        # We have to make sure that selecting this one still leaves us with options.
+        # If we can't find one, then we have to hope later on that we have no duplicate solution sets.
+        Found = False
+        if CopySol:
+
+            for Attempt in CopySol:
+
+                Test = [x for x in CopySol if x[GrapeType.RED] != Attempt[GrapeType.RED] and x[GrapeType.WHITE] != Attempt[GrapeType.WHITE]]
+                if Test:
+                    Found = True
+                    Choice = Attempt
+                    break
+
+        # If we can't find one that is unique, then pick one at random and hope for the best.
+        if not CopySol:
+            Choice = random.choice(CurrentSol)
+        elif not Found:
+            Choice = random.choice(CopySol)
+
+
+
+        # Correct all other bottles.
+        for j, SecItem in enumerate(BlushSolutions):
+
+            SecSol = SecItem[1]
+
+            # Set the current bottle's choice
+            if i == j:
+                BlushSolutions[j][1] = copy.deepcopy([Choice])
+                continue
+
+            # Otherwise, eliminate all other solutions that share anything with the choice
+            # Only bother with the ones greater than myself. We've already solved the smaller ones.
+            if j > i:
+                BlushSolutions[j][1] = [x for x in SecSol if x[GrapeType.RED] != Choice[GrapeType.RED] and x[GrapeType.WHITE] != Choice[GrapeType.WHITE]]
 
 
 def DetermineBestPath(Order, CPad, FieldMap, FullPath, CurrentBranch=0, Years=0, CurrentPath=list(), Initial=True):
@@ -232,6 +303,54 @@ def DetermineCriticalHarvests(HarvestPaths, Order):
     return CriticalHarvests
 
 
+def DetermineNeededHarvests(HarvestPaths, Order):
+
+    NeededHarvests = []
+
+    for Path in HarvestPaths:
+
+        NeededHarvestsInPath = []
+        OrderFilled = False
+        for i in range(1, len(Path)):
+
+            TestPath = copy.deepcopy(Path)
+
+            NumSetToZero = len(Path) - i
+            TestPath[i:] = [-1] * NumSetToZero
+
+            # Imaginary crush pad
+            CPad = CrushPad()
+
+            # Go through our entire path, skipping the -1 fields
+            for Year in TestPath:
+
+                if Year == -1:
+                    CPad.AgeCrushPad()
+                    continue
+
+                # Harvest field, add grapes to crush pad, then age.
+                Grapes = FieldMap[Year].HarvestField(True)
+                CPad.AddGrapes(Grapes)
+                CPad.AgeCrushPad()
+
+
+            # If the need is fulfilled, the needed harvests are those that were harvested.
+            if NeedIsFulfilled(Order, CPad):
+                NeededHarvestsInPath = [x > -1 for x in TestPath]
+                break
+
+        # This clause executes unless we broke out of the for loop.
+        # If we got here, it means we need all of the harvests in the path.
+        else:
+            NeededHarvestsInPath = [True for x in TestPath]
+
+        # Zip up the path with the harvests needed and append it to the needed harvests list.
+        Test = list(zip(copy.deepcopy(Path), NeededHarvestsInPath))
+        NeededHarvests.append(Test)
+
+    return NeededHarvests
+
+
 
 def ChoosePath(CriticalHarvests):
 
@@ -270,6 +389,7 @@ def ChoosePath(CriticalHarvests):
 
     # I've run out of heuristics at the moment. If we really don't have anything better, pick randomly.
     # At this point, they are equal.
+    # The only other possibility is to favor large fields over smaller ones, but we'll leave it like this for now
     # Get a random one since it doesn't really matter at this point.
     Index = random.randint(1, len(FinalCandidates))
 
@@ -288,40 +408,15 @@ def ChoosePath(CriticalHarvests):
 
 def EstimateYears(Order, CPad, Cellar, FieldMap):
 
-    # This is tricky.
-
-    # First figure out what wines we need to create
-    NeededWines = Order.GetWines()
-
-    # Now, figure out the minimum grades needed to fulfill the order.
-    # The difficulty is in determining the minima for filling multi grape orders.
-    NeededReds = []
-    NeededWhites = []
-    NumRed = 0
-    NumWhite = 0
-    for Bottle in NeededWines:
-
-        if Bottle.GetType() == WineType.RED:
-            NeededReds.append(Bottle.GetGrade())
-            NumRed += 1
-        elif Bottle.GetType() == WineType.WHITE:
-            NeededWhites.append(Bottle.GetGrade())
-            NumWhite += 1
-        elif Bottle.GetType() == WineType.BLUSH:
-            NumRed += 1
-            NumWhite += 1
-        else:
-            NumRed += 2
-            NumWhite += 1
-
-    # So now we have the numbers we need.
-    print("Number of red grapes needed: {0:d}\nNumber of white grapes needed: {1:d}".format(NumRed, NumWhite))
+    NumNeeded = Order.GetNumRedWhiteGrapes()
+    print("Number of red grapes needed: {0:d}\nNumber of white grapes needed: {1:d}".format(NumNeeded[GrapeType.RED], NumNeeded[GrapeType.WHITE]))
 
 
     HarvestPaths = []
     DetermineBestPath(Order, CPad, FieldMap, HarvestPaths)
     HarvestPaths = RemoveSuboptimalPaths(HarvestPaths)
-    CriticalHarvests = DetermineCriticalHarvests(HarvestPaths, Order)
+    CriticalHarvests = DetermineNeededHarvests(HarvestPaths, Order)
+    DetermineCriticalHarvests(HarvestPaths, Order)
     CurrentPath = ChoosePath(CriticalHarvests)
 
     return CurrentPath
