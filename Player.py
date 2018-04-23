@@ -9,6 +9,7 @@ import copy
 import collections
 import pprint
 import random
+import csv
 
 # Hello!
 # You will note that there is a lot of list comprehension going on here.
@@ -16,14 +17,7 @@ import random
 # But it's always better to optimize later as needed.
 
 
-def GrapeMapFromGrapes(Grapes):
 
-    GrapeMap = collections.defaultdict(list)
-
-    for Grp in Grapes:
-        GrapeMap[Grp.GetType()].append(Grp.GetGrade())
-
-    return GrapeMap
 
 
 
@@ -31,10 +25,7 @@ def GrapeMapFromGrapes(Grapes):
 def NeedIsFulfilled(Order, Crush):
 
     # Check if the wine order can be filled based on the crush pad given
-
-    Grapes = Crush.GetGrapes()
-
-    CrushMap = GrapeMapFromGrapes(Grapes)
+    CrushMap = Crush.GetCrushMap()
     NumNeeded = Order.GetNumRedWhiteGrapes()
 
     # Sanity check. If we don't have the right number of each type, we may as well give up now.
@@ -341,6 +332,48 @@ def DetermineYearToDrawNewOrder(CurrentPath):
 
 
 
+def ConstructWineDeck(FilePath):
+    WineDeck = []
+
+    with open(FilePath, 'r') as f:
+
+        WineReader = csv.DictReader(f, delimiter=',')
+
+        for row in WineReader:
+
+            Wines = WineListFromTextFile(row['wines'])
+            WineDeck.append(WineOrder(Wines, row['vp'], row['residual']))
+
+    return WineDeck
+
+def WineListFromTextFile(WineListStr):
+
+    # Remove the []
+    TempStr = WineListStr[1:-1]
+
+    WineArray = TempStr.split()
+
+    Wines = []
+    for Item in WineArray:
+
+        Grade = Item[0]
+        Type = Item[1]
+        WType = WineType.RED
+
+        if Type.lower() == "r":
+            WType = WineType.RED
+        elif Type.lower() == "w":
+            WType = WineType.WHITE
+        elif Type.lower() == "b":
+            WType = WineType.BLUSH
+        elif Type.lower() == "s":
+            WType = WineType.SPARKLING
+
+        Wines.append(Wine(WType, Grade))
+
+    return Wines
+
+
 
 if __name__ == '__main__':
 
@@ -360,8 +393,15 @@ if __name__ == '__main__':
     MField.SetField(RedGrade=3, WhiteGrade=3)
     LField.SetField(RedGrade=4, WhiteGrade=3)
 
-    # TODO: Add a wine order deck to randomly draw wine orders.
-    WineList = [Wine(WineType.RED, 7), Wine(WineType.WHITE, 6)] # Expected 2 years from empty
+
+    WineDeck = ConstructWineDeck("WineOrderDefPython.csv")
+
+
+
+    # WineList = [Wine(WineType.RED, 7), Wine(WineType.WHITE, 6)] # Expected 2 years from empty
+
+    WineList = [Wine(WineType.BLUSH, 9), Wine(WineType.RED, 6), Wine(WineType.WHITE, 6)]
+
     CurrentWineOrder = WineOrder(WineList, 6, 2)
 
 
@@ -375,15 +415,15 @@ if __name__ == '__main__':
     # We play the game. Let's try to estimate how many years it'll take to fulfill this order
     CurrentPath = EstimateYears(CurrentWineOrder, CPad, Cellar, FieldMap)
 
-    print("Number of years to complete objective: {0:d}".format(len(CurrentPath)))
+    print("Number of years to complete objective: {0:d}".format(len(CurrentPath) + 1))
     pp.pprint(CurrentPath)
 
 
-    ChoosePath(
-        [
-        [(FieldType.LARGE, True), (FieldType.MEDIUM, False), (FieldType.LARGE, True), (FieldType.MEDIUM, False)],
-        [(FieldType.LARGE, True), (FieldType.LARGE, True), (FieldType.MEDIUM, False), (FieldType.MEDIUM, False)]
-        ]
-    )
+    # ChoosePath(
+    #     [
+    #     [(FieldType.LARGE, True), (FieldType.MEDIUM, False), (FieldType.LARGE, True), (FieldType.MEDIUM, False)],
+    #     [(FieldType.LARGE, True), (FieldType.LARGE, True), (FieldType.MEDIUM, False), (FieldType.MEDIUM, False)]
+    #     ]
+    # )
 
 
