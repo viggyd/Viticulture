@@ -8,11 +8,6 @@ class Wine:
         self.Grade = Grade
         self.Type = Type
 
-    def Age(self, Cellar):
-
-        # The maximum grade is based on the current cellar
-        CurrentMaxGrade = Cellar * 3 + 3
-        self.Grade = min(CurrentMaxGrade, self.Grade + 1)
 
     def GetGrade(self):
         return self.Grade
@@ -30,3 +25,30 @@ class Wine:
             return "Blush {self.Grade}".format(self=self)
         elif self.Type == WineType.SPARKLING:
             return "Sparkling {self.Grade}".format(self=self)
+
+
+    def __hash__(self):
+        return hash((self.Type, self.Grade))
+
+
+    def __eq__(self, other):
+
+        return (self.Type, self.Grade) == (other.Type, other.Grade)
+
+    def __lt__(self, other):
+
+        if self.Type < other.Type:
+            return True
+        elif self.Type > other.Type:
+            return False
+        else:
+            return self.Grade < other.Grade
+
+    def __gt__(self, other):
+
+        if self.Type > other.Type:
+            return True
+        elif self.Type < other.Type:
+            return False
+        else:
+            return self.Grade > other.Grade
