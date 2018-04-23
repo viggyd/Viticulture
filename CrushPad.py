@@ -1,5 +1,6 @@
 from ViticultureConstants import *
 from Grape import Grape
+import collections
 
 class CrushPad:
 
@@ -52,7 +53,7 @@ class CrushPad:
             for j in range(len(self.Crush[i])):
 
                 if self.Crush[i][j]:
-                    GrapeArray.append(Grape(i, j))
+                    GrapeArray.append(Grape(i, j + 1))
 
         return GrapeArray
 
@@ -70,30 +71,20 @@ class CrushPad:
 
         return AllFound
 
+    def GrapeMapFromGrapes(self, Grapes):
 
-    # def __str__(self):
-    #
-    #     CrushString = ""
-    #     CrushString += "Type  |  1  2  3  4  5  6  7  8  9\n"
-    #
-    #
-    #     for i in range(2):
-    #
-    #         if i == 0:
-    #             CrushString += "Red   |"
-    #         else:
-    #             CrushString += "White |"
-    #
-    #         for j in range(9): # Iterate over both types of crush pads
-    #
-    #             if self.Crush[i][j]:
-    #                 CrushString += "  X"
-    #             else:
-    #                 CrushString += "   "
-    #
-    #         CrushString += "\n"
-    #
-    #     return CrushString
+        GrapeMap = collections.defaultdict(list)
+
+        for Grp in Grapes:
+            GrapeMap[Grp.GetType()].append(Grp.GetGrade())
+
+        return GrapeMap
+
+    def GetCrushMap(self):
+
+        return self.GrapeMapFromGrapes(self.GetGrapes())
+
+
 
     def __repr__(self):
 
