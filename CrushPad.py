@@ -71,6 +71,21 @@ class CrushPad:
 
         return AllFound
 
+
+    def RemoveLargestGrape(self, Type):
+
+        GrapeArray = self.Crush[Type]
+
+        for i in range(8, -1, -1):
+
+            if GrapeArray[i]:
+                GrapeArray[i] = False
+                return Grape(Type, i + 1)
+
+        return None
+
+
+
     def GrapeMapFromGrapes(self, Grapes):
 
         GrapeMap = collections.defaultdict(list)

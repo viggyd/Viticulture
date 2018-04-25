@@ -5,6 +5,7 @@ from Player import Player
 from Field import  Field
 import cProfile
 import time
+from collections import defaultdict
 import copy
 
 def NaivePlay(FieldMap, WineDeck):
@@ -38,13 +39,13 @@ def NaivePlay(FieldMap, WineDeck):
                 Mondavi.GetFieldMap()
             )
 
-            Solver.DetermineWhenToTurnGrapesToWine(
-                CurrentObjective,
-                copy.deepcopy(Path),
-                copy.deepcopy(Mondavi.GetCrushPad()),
-                copy.deepcopy(Mondavi.GetCellar()),
-                copy.deepcopy(Mondavi.GetFieldMap())
-            )
+            # Solver.DetermineWhenToTurnGrapesToWine(
+            #     CurrentObjective,
+            #     copy.deepcopy(Path),
+            #     copy.deepcopy(Mondavi.GetCrushPad()),
+            #     copy.deepcopy(Mondavi.GetCellar()),
+            #     copy.deepcopy(Mondavi.GetFieldMap())
+            # )
 
 
             # This can happen if we cannot fulfill the order. Just increment the year and move on.
@@ -64,8 +65,10 @@ def NaivePlay(FieldMap, WineDeck):
         Mondavi.HarvestField(FieldToHarvest)
 
         # See if our need is fulfilled.
-        UsedGrapes = []
+        UsedGrapes = defaultdict(list)
         if Solver.NeedIsFulfilled(CurrentObjective, Mondavi.GetCrushPad(), Mondavi.GetCellar(), UsedGrapes):
+            # Get grape list from mapping
+            UsedGrapeList = list(UsedGrapes.values())
 
             # Remove the grapes that we are using from the crush pad.
             Mondavi.RemoveGrapesFromCrushPad(UsedGrapes)
@@ -138,10 +141,18 @@ def Play(FieldMap, WineDeck):
         Mondavi.HarvestField(FieldToHarvest)
 
         # See if our need is fulfilled.
-        UsedGrapes = []
+        UsedGrapes = defaultdict(list)
         if Solver.NeedIsFulfilled(CurrentObjective, Mondavi.GetCrushPad(), Mondavi.GetCellar(), UsedGrapes):
             # Remove the grapes that we are using from the crush pad.
-            Mondavi.RemoveGrapesFromCrushPad(UsedGrapes)
+
+            # Get grape list from mapping
+            UsedGrapeList = []
+
+            for item in UsedGrapes.values():
+                UsedGrapeList.extend(item)
+
+
+            Mondavi.RemoveGrapesFromCrushPad(UsedGrapeList)
 
             # Increase our number of victory points
             Mondavi.AddVP(CurrentObjective.GetVP())
@@ -161,7 +172,7 @@ def Play(FieldMap, WineDeck):
 
             NextObjective = WineDeck.DrawCard()
 
-            # Solver.ResolveObjectives(CurrentObjective, NextObjective, Mondavi.GetCrushPad(), Mondavi.GetCellar(), Mondavi.GetFieldMap())
+            Solver.ResolveObjectives(CurrentObjective, NextObjective, HarvestPath, Mondavi.GetCrushPad(), Mondavi.GetCellar(), Mondavi.GetFieldMap())
 
             pass
 
@@ -175,72 +186,6 @@ def Play(FieldMap, WineDeck):
             "Orders": OrdersCompleted
         }
 
-
-    # For now, we'll hard code our initial conditions,
-    # but eventually, we'll be setting these parametrically
-    # MField.SetField(RedGrade=3, WhiteGrade=3)
-    # LField.SetField(RedGrade=4, WhiteGrade=3)
-    #
-    # WineDeck = WineOrderDeck("WineOrderDefPython.csv")
-    #
-    #
-    # YearsPassed = 0
-    #
-    # ObjectiveSet = False
-    # CurrentObjective = None
-    # NextObjective = None
-    # HarvestPath = []
-    #
-    # while MyPlayer.GetVP() < 20:
-    #
-    #     # If we do not have a current objective, pick one up.
-    #     if not ObjectiveSet:
-    #         CurrentObjective = WineDeck.DrawCard()
-    #
-    #
-    #         # Get the path we need to take to meet the objective.
-    #         Path = Solver.GetPathForObjective(CurrentObjective, CPad, Cellar, FieldMap)
-    #
-    #
-    #         # This can happen if we cannot fulfill the order. Just increment the year and move on.
-    #         if not Path:
-    #             YearsPassed += 1
-    #             continue
-    #
-    #         ObjectiveSet = True
-    #         HarvestPath = Path
-    #
-    #
-    #     # Harvest the next field.
-    #     (FieldToHarvest, IsCritical) = HarvestPath.pop(0)
-    #
-    #     # Harvest and add to the Crush pad
-    #     GrapesFromField = FieldMap[FieldToHarvest].HarvestField()
-    #     CPad.AddGrapes(GrapesFromField)
-    #
-    #     # See if our need is fulfilled.
-    #     UsedGrapes = []
-    #     if Solver.NeedIsFulfilled(CurrentObjective, CPad, UsedGrapes):
-    #
-    #         # Remove the grapes that we are using from the crush pad.
-    #         CPad.RemoveGrapes(UsedGrapes)
-    #
-    #         # Increase our number of victory points
-    #         CurrentVP += CurrentObjective.GetVP()
-    #
-    #         # Reset out objective
-    #         CurrentObjective = NextObjective if NextObjective is not None else None
-    #         ObjectiveSet = CurrentObjective is not None
-    #
-    #     elif not IsCritical and NextObjective is None:
-    #         print("got here")
-    #
-    #
-    #
-    #
-    #     CPad.AgeCrushPad()
-    #
-    #     YearsPassed += 1
 
 
 
@@ -272,7 +217,7 @@ if __name__ == '__main__':
 
         WineDeck.ReshuffleDeck()
 
-        Results = NaivePlay(FieldMap, WineDeck)
+        Results = Play(FieldMap, WineDeck)
 
 
 

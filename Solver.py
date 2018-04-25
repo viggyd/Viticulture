@@ -7,6 +7,41 @@ import random
 from collections import defaultdict
 
 
+
+
+def ResolveObjectives(CurrentObjective, NextObjective, HarvestPath, Crush, Cellar, FieldMap):
+
+
+    NumRedWhite = CurrentObjective.GetNumRedWhiteGrapes()
+
+
+    for Type, Number in NumRedWhite.items():
+
+        # Remove from the crush pad the number of red/white in the order.
+        for i in range(Number):
+
+            Crush.RemoveLargestGrape(Type)
+
+
+    # If we have any excess, it is ours to do with as we please. Leave them.
+    NewObjPath = GetPathForObjective(NextObjective, Crush, Cellar, FieldMap)
+
+    Delta = len(HarvestPath) - len(NewObjPath)
+
+    HarvestPath = NewObjPath
+    for i in range(Delta):
+        HarvestPath.append((random.choice([FieldType.MEDIUM, FieldType.LARGE]), False))
+
+
+    pass
+
+
+
+
+
+
+
+
 def DetermineWhenToTurnGrapesToWine(Order, Path, Crush, Cellar, FieldMap):
 
     # Harvest critical paths and age the rest.
@@ -35,7 +70,8 @@ def DetermineWhenToTurnGrapesToWine(Order, Path, Crush, Cellar, FieldMap):
         # Unage our grapes
         for Key, Value in WineGrapeMap.items():
             for item in Value:
-                item.SetGrade(item.GetGrade() - 1)
+                pass
+                # item.SetGrade(item.GetGrade() - 1)
 
     print("x")
 
@@ -52,9 +88,6 @@ def NeedIsFulfilled(Order, Crush, Cellar, UsedGrapes=defaultdict(list)):
         pass
 
 
-
-    # Empty the list
-    UsedGrapes.clear()
 
     # Sanity check. If we don't have the right number of each type, we may as well give up now.
     for Key, Val in NumNeeded.items():
@@ -315,7 +348,7 @@ def DetermineCriticalHarvests(HarvestPaths, Order, FieldMap):
 
     return CriticalHarvests
 
-def DetermineNeededHarvests(HarvestPaths, Order, FieldMap):
+def DetermineNeededHarvests(HarvestPaths, Order, FieldMap, InitCrush = CrushPad()):
 
     NeededHarvests = []
 
@@ -332,7 +365,7 @@ def DetermineNeededHarvests(HarvestPaths, Order, FieldMap):
             TestPath[i:] = [-1] * NumSetToZero
 
             # Imaginary crush pad
-            CPad = CrushPad()
+            CPad = copy.deepcopy(InitCrush)
 
             # Go through our entire path, skipping the -1 fields
             for Year in TestPath:
@@ -416,7 +449,6 @@ def EstimateYears(Order, CPad, Cellar, FieldMap):
     DetermineBestPath(Order, CPad, FieldMap, HarvestPaths)
     HarvestPaths = RemoveSuboptimalPaths(HarvestPaths)
     CriticalHarvests = DetermineNeededHarvests(HarvestPaths, Order, FieldMap)
-    DetermineCriticalHarvests(HarvestPaths, Order, FieldMap)
     CurrentPath = ChoosePath(CriticalHarvests)
 
     return CurrentPath
@@ -431,8 +463,7 @@ def GetPathForObjective(Order, CPad, Cellar, FieldMap):
 
     DetermineBestPath(Order, CopyCPad, CopyField, HarvestPaths)
     HarvestPaths = RemoveSuboptimalPaths(HarvestPaths)
-    CriticalHarvests = DetermineNeededHarvests(HarvestPaths, Order, CopyField)
-    DetermineCriticalHarvests(HarvestPaths, Order, CopyField)
+    CriticalHarvests = DetermineNeededHarvests(HarvestPaths, Order, CopyField, CPad)
     CurrentPath = ChoosePath(CriticalHarvests)
 
     return CurrentPath
