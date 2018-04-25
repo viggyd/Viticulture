@@ -96,3 +96,17 @@ class WineCellar:
             self.Size = CellarType.LARGE
 
         self.CurrMaxGrade = self.Size * 3 + 3
+
+    def AgeCellar(self):
+        """Age all grapes in crush pad by 1
+
+        """
+
+        for i in range(4):  # Iterate over both types of crush pads
+            for j in range(8, -1, -1):  # Go through each slot in reverse order
+
+                # If the slot if not currently full, move the previous grade up by one.
+                # We must check if it is full to ensure that they stop at the max grade.
+                if not self.Cellar[i][j] and j > 0:
+                    self.Cellar[i][j] = self.Cellar[i][j - 1]
+                    self.Cellar[i][j - 1] = False
