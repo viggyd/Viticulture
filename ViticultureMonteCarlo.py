@@ -3,7 +3,7 @@ import Solver
 from WineOrderDeck import WineOrderDeck
 from Player import Player
 from Field import  Field
-import cProfile
+import json
 import time
 from collections import defaultdict
 import copy
@@ -50,6 +50,7 @@ def NaivePlay(FieldMap, WineDeck):
 
             # This can happen if we cannot fulfill the order. Just increment the year and move on.
             if not Path:
+                CurrentObjective = None
                 YearsPassed += 1
                 continue
 
@@ -67,18 +68,17 @@ def NaivePlay(FieldMap, WineDeck):
         # See if our need is fulfilled.
         UsedGrapes = defaultdict(list)
         if Solver.NeedIsFulfilled(CurrentObjective, Mondavi.GetCrushPad(), Mondavi.GetCellar(), UsedGrapes):
-            # Get grape list from mapping
-            UsedGrapeList = list(UsedGrapes.values())
-
             # Remove the grapes that we are using from the crush pad.
-            Mondavi.RemoveGrapesFromCrushPad(UsedGrapes)
+
+            for GrapeList in UsedGrapes.values():
+                Mondavi.RemoveGrapesFromCrushPad(GrapeList)
 
             # Increase our number of victory points
             Mondavi.AddVP(CurrentObjective.GetVP())
 
             OrdersCompleted.append(
                 {
-                    "Order" : CurrentObjective,
+                    "Order" : CurrentObjective.PrintDictionary(),
                     "Year" : YearsPassed
                 }
             )
@@ -94,7 +94,8 @@ def NaivePlay(FieldMap, WineDeck):
         {
             "Years" : YearsPassed,
             "Fields" : FieldsHarvested,
-            "Orders" : OrdersCompleted
+            "Orders" : OrdersCompleted,
+            "VP" : Mondavi.GetVP()
         }
 
 
@@ -145,34 +146,37 @@ def Play(FieldMap, WineDeck):
         if Solver.NeedIsFulfilled(CurrentObjective, Mondavi.GetCrushPad(), Mondavi.GetCellar(), UsedGrapes):
             # Remove the grapes that we are using from the crush pad.
 
-            # Get grape list from mapping
-            UsedGrapeList = []
-
-            for item in UsedGrapes.values():
-                UsedGrapeList.extend(item)
-
-
-            Mondavi.RemoveGrapesFromCrushPad(UsedGrapeList)
+            for GrapeList in UsedGrapes.values():
+                Mondavi.RemoveGrapesFromCrushPad(GrapeList)
 
             # Increase our number of victory points
             Mondavi.AddVP(CurrentObjective.GetVP())
 
             OrdersCompleted.append(
                 {
-                    "Order": CurrentObjective,
+                    "Order": CurrentObjective.PrintDictionary(),
                     "Year": YearsPassed
                 }
             )
 
             # Reset out objective.
             # It's either None or something. In either case, it works for us.
-            CurrentObjective = NextObjective
+            CurrentObjective = copy.deepcopy(NextObjective)
+            NextObjective = None
 
         elif not IsCritical and NextObjective is None:
 
             NextObjective = WineDeck.DrawCard()
 
-            Solver.ResolveObjectives(CurrentObjective, NextObjective, HarvestPath, Mondavi.GetCrushPad(), Mondavi.GetCellar(), Mondavi.GetFieldMap())
+            HarvestPath = Solver.ResolveObjectives(
+                CurrentObjective,
+                NextObjective,
+                HarvestPath,
+                copy.deepcopy(Mondavi.GetCrushPad()),
+                copy.deepcopy(Mondavi.GetCellar()),
+                Mondavi.GetFieldMap()
+            )
+
 
             pass
 
@@ -183,11 +187,15 @@ def Play(FieldMap, WineDeck):
         {
             "Years": YearsPassed,
             "Fields": FieldsHarvested,
-            "Orders": OrdersCompleted
+            "Orders": OrdersCompleted,
+            "VP" : Mondavi.GetVP()
         }
 
 
 
+
+def Simulate(Parameters, OptimizationLevel, NumSims=1000):
+    pass
 
 if __name__ == '__main__':
 
@@ -211,16 +219,37 @@ if __name__ == '__main__':
         FieldType.LARGE  : LField
     }
 
-    start_time = time.time()
 
+    Parameters = {
+        "Fields" : {
+            FieldType.SMALL : SField.GetLayout(),
+            FieldType.MEDIUM : MField.GetLayout(),
+            FieldType.LARGE : LField.GetLayout(),
+        },
+        "Optimization" : 1
+    }
+
+    Optimization = 0
+
+    print(json.dumps(Parameters, indent=2))
+
+    ResultsDict = {}
     for i in range(NumSim):
 
         WineDeck.ReshuffleDeck()
 
-        Results = Play(FieldMap, WineDeck)
+        if Optimization == 1:
+            Results = Play(FieldMap, WineDeck)
+        else:
+            Results = NaivePlay(FieldMap, WineDeck)
+
+        ResultsDict[i] = Results
 
 
+    SimulationLog = {
+        "Parameters" : Parameters,
+        "Results" : ResultsDict
+    }
 
 
-
-    print("\nExecution Time: {0:0.5f}s".format(time.time() - start_time))
+    # print(json.dumps(SimulationLog, indent=2))
