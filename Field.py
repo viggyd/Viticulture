@@ -64,6 +64,14 @@ class Field:
         self.Harvested = not Estimate
         return Grapes
 
+    def GetLayout(self):
+
+        return \
+            {
+                "Capacity" : self.RedGrade + self.WhiteGrade,
+                "Layout" : self.RedGrade - self.WhiteGrade
+            }
+
 
     def __repr__(self):
 
