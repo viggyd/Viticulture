@@ -462,6 +462,10 @@ def GetPathForObjective(Order, CPad, Cellar, FieldMap):
 
 
     DetermineBestPath(Order, CopyCPad, CopyField, HarvestPaths)
+
+    if not HarvestPaths:
+        return []
+
     HarvestPaths = RemoveSuboptimalPaths(HarvestPaths)
     CriticalHarvests = DetermineNeededHarvests(HarvestPaths, Order, CopyField, CPad)
     CurrentPath = ChoosePath(CriticalHarvests)
