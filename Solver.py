@@ -29,13 +29,11 @@ def ResolveObjectives(CurrentObjective, NextObjective, HarvestPath, Crush, Cella
     Delta = len(HarvestPath) - len(NewObjPath)
 
     HarvestPath = NewObjPath
-    for i in range(Delta):
+    for i in range(Delta + 1):
         HarvestPath.append((random.choice([FieldType.MEDIUM, FieldType.LARGE]), False))
 
 
-    pass
-
-
+    return HarvestPath
 
 
 
@@ -460,6 +458,8 @@ def GetPathForObjective(Order, CPad, Cellar, FieldMap):
     CopyCPad = copy.deepcopy(CPad)
     CopyCellar = copy.deepcopy(Cellar)
     CopyField = copy.deepcopy(FieldMap)
+
+
 
     DetermineBestPath(Order, CopyCPad, CopyField, HarvestPaths)
     HarvestPaths = RemoveSuboptimalPaths(HarvestPaths)
