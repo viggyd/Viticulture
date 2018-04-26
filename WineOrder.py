@@ -109,3 +109,11 @@ class WineOrder:
 
 
 
+    def PrintDictionary(self):
+
+        return \
+            {
+                "Wines" : self.WineMap,
+                "VP" : self.VP,
+                "Residual" : self.Residual
+            }
