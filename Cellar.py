@@ -2,8 +2,29 @@ from ViticultureConstants import *
 from Wine import Wine
 
 class WineCellar:
+    """A player's wine cellar. Stores and ages wines.
+
+    Attributes:
+        cellar (list(list)): A 2-D list of the wine types along with the wines currently in the cellar.
+        size (CellarType): Current size of the wine cellar (small, medium, large)
+
+    """
 
     def __init__(self):
+        """Example of docstring on the __init__ method.
+
+            The __init__ method may be documented in either the class level
+            docstring, or as a docstring on the __init__ method itself.
+    
+            Either form is acceptable, but the two should not be mixed. Choose one
+            convention to document the __init__ method and be consistent with it.
+    
+            Note:
+                Do not include the `self` parameter in the ``Args`` section.
+    
+            Args:
+
+        """
 
         # Create the 2D array
         self.Cellar = [[False for x in range(9)] for y in range(4)]

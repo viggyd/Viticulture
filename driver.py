@@ -4,13 +4,12 @@ from Field import Field
 import os
 import json
 import ViticultureMonteCarlo
-import sys
 import argparse
 
 def GenerateResultsNameFromParameters(Parameters):
 
     Fields = Parameters["Fields"]
-    return "S{0:d}{1:d}_M{2:d}{3:d}_L{4:d}{5:d}_OPT{0:d}results.json".format(
+    return "S{0:d}{1:d}_M{2:d}{3:d}_L{4:d}{5:d}_OPT{6:d}results.json".format(
         Fields['0']["Capacity"],
         Fields['0']["Layout"],
         Fields['1']["Capacity"],
@@ -60,40 +59,37 @@ def Simulate(WineDeckFile, FieldParamPath, ResultPath):
     WineDeck = WineOrderDeck(WineDeckFile)
 
     NumSim = 1500
+    OptLevel = 1
 
-    for OptLevel in [0, 1]:
 
-        for filename in os.listdir(FieldParamPath):
+    for filename in os.listdir(FieldParamPath):
 
-            FieldParams = GenerateFieldsParameterFromFile(FieldParamPath + filename)
-            FieldMap = GenerateFieldMapFromParameters(FieldParams)
+        FieldParams = GenerateFieldsParameterFromFile(FieldParamPath + filename)
+        FieldMap = GenerateFieldMapFromParameters(FieldParams)
 
-            Parameters = {
-                "Fields": FieldParams,
-                "Optimization": OptLevel
-            }
+        Parameters = {
+            "Fields": FieldParams,
+            "Optimization": OptLevel
+        }
 
-            OutName = GenerateResultsNameFromParameters(Parameters)
+        OutName = GenerateResultsNameFromParameters(Parameters)
 
-            ResultsDict = {}
-            for i in range(NumSim):
+        ResultsDict = {}
+        for i in range(NumSim):
 
-                WineDeck.ReshuffleDeck()
+            WineDeck.ReshuffleDeck()
 
-                if OptLevel == 0:
-                    Results = ViticultureMonteCarlo.NaivePlay(FieldMap, WineDeck)
-                else:
-                    Results = ViticultureMonteCarlo.Play(FieldMap, WineDeck)
+            Results = ViticultureMonteCarlo.Play(FieldMap, WineDeck, OptLevel)
 
-                ResultsDict[i] = Results
+            ResultsDict[i] = Results
 
-            SimulationLog = {
-                "Parameters": Parameters,
-                "Results": ResultsDict
-            }
+        SimulationLog = {
+            "Parameters": Parameters,
+            "Results": ResultsDict
+        }
 
-            with open(ResultPath + OutName, 'w') as f:
-                f.write(json.dumps(SimulationLog, indent=2))
+        with open(ResultPath + OutName, 'w') as f:
+            f.write(json.dumps(SimulationLog, indent=2))
 
 
 

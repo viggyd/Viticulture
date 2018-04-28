@@ -22,7 +22,7 @@ class CrushPad:
 
         # Try to fill the maximum slot possible.
         # Start at the given grade, iterate down to 1.
-        for i in range(Grade - 1, 0, -1):
+        for i in range(Grade - 1, -1, -1):
 
             # If the slot we are trying to add to is not occupied, set to true and return
             if not self.Crush[Type][i]:

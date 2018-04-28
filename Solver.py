@@ -26,6 +26,9 @@ def ResolveObjectives(CurrentObjective, NextObjective, HarvestPath, Crush, Cella
     # If we have any excess, it is ours to do with as we please. Leave them.
     NewObjPath = GetPathForObjective(NextObjective, Crush, Cellar, FieldMap)
 
+    if not NewObjPath:
+        return (HarvestPath, False)
+
     Delta = len(HarvestPath) - len(NewObjPath)
 
     HarvestPath = NewObjPath
@@ -33,7 +36,7 @@ def ResolveObjectives(CurrentObjective, NextObjective, HarvestPath, Crush, Cella
         HarvestPath.append((random.choice([FieldType.MEDIUM, FieldType.LARGE]), False))
 
 
-    return HarvestPath
+    return (HarvestPath, True)
 
 
 
@@ -435,21 +438,6 @@ def ChoosePath(CriticalHarvests):
 
     return FinalCandidates[Index - 1]
 
-def EstimateYears(Order, CPad, Cellar, FieldMap):
-
-    NumNeeded = Order.GetNumRedWhiteGrapes()
-    print(
-        "Number of red grapes needed: {0:d}\nNumber of white grapes needed: {1:d}".format(NumNeeded[GrapeType.RED],
-                                                                                          NumNeeded[
-                                                                                              GrapeType.WHITE]))
-
-    HarvestPaths = []
-    DetermineBestPath(Order, CPad, FieldMap, HarvestPaths)
-    HarvestPaths = RemoveSuboptimalPaths(HarvestPaths)
-    CriticalHarvests = DetermineNeededHarvests(HarvestPaths, Order, FieldMap)
-    CurrentPath = ChoosePath(CriticalHarvests)
-
-    return CurrentPath
 
 def GetPathForObjective(Order, CPad, Cellar, FieldMap):
 
