@@ -1,6 +1,8 @@
-from viticulture import Field, WineCellar, GrapeType, FieldType, CrushPad
 import copy
-import Solver
+
+from simulation import Solver
+from viticulture import Field, WineCellar, GrapeType, FieldType, CrushPad
+
 
 # Hello!
 # You will note that there is a lot of list comprehension going on here.

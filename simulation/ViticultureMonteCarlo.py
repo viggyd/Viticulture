@@ -1,10 +1,9 @@
 import copy
 from collections import defaultdict
 
-from viticulture import Wine, WineOrder, WineOrderDeck, FieldType, Field, WineType
-
-import Solver
-from viticulture.player import Player
+from simulation import Solver
+from viticulture import Wine, WineOrder, WineOrderDeck, FieldType, Field, \
+    WineType, Player
 
 
 def DebugPlay(FieldMap, WineDeck, OptLevel):

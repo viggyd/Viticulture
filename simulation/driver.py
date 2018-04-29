@@ -1,8 +1,10 @@
-from viticulture import WineOrderDeck, Field, FieldType
-import os
-import json
-import ViticultureMonteCarlo
 import argparse
+import json
+import os
+
+from simulation import ViticultureMonteCarlo
+from viticulture import WineOrderDeck, Field, FieldType
+
 
 def GenerateResultsNameFromParameters(Parameters):
 

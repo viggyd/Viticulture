@@ -1,6 +1,8 @@
-from viticulture import *
-import Solver
 import unittest
+
+from simulation import Solver
+from viticulture import *
+
 
 class TestWineOrderFulfill(unittest.TestCase):
 
