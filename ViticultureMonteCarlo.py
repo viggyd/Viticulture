@@ -258,7 +258,7 @@ def Simulate(Parameters, OptimizationLevel, NumSims=1000):
 if __name__ == '__main__':
 
 
-    WineDeck = WineOrderDeck("WineOrderDefPython.csv")
+    WineDeck = WineOrderDeck("wine_def.csv")
     # FieldMap = ParseFieldMap("FieldMap.txt")
 
 

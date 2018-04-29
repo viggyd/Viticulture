@@ -1,5 +1,4 @@
-from ViticultureConstants import *
-from Wine import Wine
+from viticulture import WineType, GrapeType
 from collections import defaultdict
 
 class WineOrder:

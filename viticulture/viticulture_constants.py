@@ -1,4 +1,3 @@
-from enum import Enum
 from enum import IntEnum
 
 # Maximum grade of grape/wine

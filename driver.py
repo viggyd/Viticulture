@@ -1,6 +1,4 @@
-from WineOrderDeck import WineOrderDeck
-from Field import FieldType
-from Field import Field
+from viticulture import WineOrderDeck, Field, FieldType
 import os
 import json
 import ViticultureMonteCarlo
@@ -55,7 +53,7 @@ def GenerateFieldMapFromParameters(FieldParams):
 
 def Simulate(WineDeckFile, FieldParamPath, ResultPath):
 
-    # WineDeck = WineOrderDeck("WineOrderDefPython.csv")
+    # WineDeck = WineOrderDeck("wine_def.csv")
     WineDeck = WineOrderDeck(WineDeckFile)
 
     NumSim = 1500

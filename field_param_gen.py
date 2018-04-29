@@ -1,5 +1,4 @@
-from Field import Field
-from Field import FieldType
+from viticulture import FieldType
 import json
 
 def GenerateName(Fields):

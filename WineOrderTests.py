@@ -1,11 +1,5 @@
-from Player import *
-from ViticultureConstants import *
-from Wine import Wine
-from WineOrder import WineOrder
-from Grape import Grape
-from Cellar import WineCellar
-from CrushPad import CrushPad
-
+from viticulture import *
+import Solver
 import unittest
 
 class TestWineOrderFulfill(unittest.TestCase):
@@ -158,7 +152,7 @@ class TestBlushGenerateSolutions(unittest.TestCase):
         CrushMap = Crush.GetCrushMap()
         WineBottle = Wine(WineType.BLUSH, 5)
 
-        Sols = GenerateBlushSolutions(WineBottle, CrushMap)
+        Sols = Solver.GenerateBlushSolutions(WineBottle, CrushMap)
 
         ExpSols = [
             {GrapeType.RED: 2, GrapeType.WHITE: 3},
@@ -171,7 +165,7 @@ class TestBlushGenerateSolutions(unittest.TestCase):
 
         WineBottle = Wine(WineType.BLUSH, 6)
 
-        Sols = GenerateBlushSolutions(WineBottle, CrushMap)
+        Sols = Solver.GenerateBlushSolutions(WineBottle, CrushMap)
 
         ExpSols = [
             {GrapeType.RED: 2, GrapeType.WHITE: 4},
@@ -199,9 +193,9 @@ class TestBlushGenerateSolutions(unittest.TestCase):
 
         BlushSolutions = []
         for Bottle in BlushWines:
-            BlushSolutions.append([Bottle, GenerateBlushSolutions(Bottle, CrushMap)])
+            BlushSolutions.append([Bottle, Solver.GenerateBlushSolutions(Bottle, CrushMap)])
 
-        SolveBlushWines(BlushSolutions)
+            Solver.SolveBlushWines(BlushSolutions)
         print("done")
 
 

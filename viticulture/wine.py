@@ -1,5 +1,4 @@
-# Defines the wine card
-from ViticultureConstants import *
+from viticulture import WineType
 
 class Wine:
 

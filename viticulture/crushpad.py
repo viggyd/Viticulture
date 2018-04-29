@@ -1,5 +1,4 @@
-from ViticultureConstants import *
-from Grape import Grape
+from viticulture import Grape, GrapeType
 import collections
 
 class CrushPad:

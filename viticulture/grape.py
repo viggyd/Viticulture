@@ -1,4 +1,4 @@
-from ViticultureConstants import *
+from viticulture import GrapeType
 
 class Grape:
 

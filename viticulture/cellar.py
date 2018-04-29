@@ -1,5 +1,4 @@
-from ViticultureConstants import *
-from Wine import Wine
+from viticulture import Wine, WineType, CellarType, GrapeType
 
 class WineCellar:
     """A player's wine cellar. Stores and ages wines.

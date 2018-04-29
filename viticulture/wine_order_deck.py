@@ -1,6 +1,4 @@
-from ViticultureConstants import WineType
-from Wine import Wine
-from WineOrder import WineOrder
+from viticulture import Wine, WineType, WineOrder
 import csv
 import random
 import copy
