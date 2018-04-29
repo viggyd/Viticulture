@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from simulation import Solver
 from viticulture import Wine, WineOrder, WineOrderDeck, FieldType, Field, \
-    WineType, Player
+    WineType, Player, VP_THRESHOLD
 
 
 def DebugPlay(FieldMap, WineDeck, OptLevel):
@@ -157,7 +157,7 @@ def Play(FieldMap, WineDeck, OptLevel):
     OrdersCompleted = []
     VPTime = []
 
-    while Mondavi.GetVP() < 20 and YearsPassed < 25:
+    while Mondavi.GetVP() < VP_THRESHOLD and YearsPassed < 25:
 
         # If we do not have a current objective, pick one up.
         if CurrentObjective is None:
@@ -244,11 +244,6 @@ def Play(FieldMap, WineDeck, OptLevel):
             "VPTime" : VPTime
         }
 
-
-
-
-def Simulate(Parameters, OptimizationLevel, NumSims=1000):
-    pass
 
 if __name__ == '__main__':
 

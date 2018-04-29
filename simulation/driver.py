@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 
-from simulation import ViticultureMonteCarlo
+from simulation import viticulture_monte_carlo
 from viticulture import WineOrderDeck, Field, FieldType
 
 
@@ -79,7 +79,7 @@ def Simulate(WineDeckFile, FieldParamPath, ResultPath):
 
             WineDeck.ReshuffleDeck()
 
-            Results = ViticultureMonteCarlo.Play(FieldMap, WineDeck, OptLevel)
+            Results = viticulture_monte_carlo.Play(FieldMap, WineDeck, OptLevel)
 
             ResultsDict[i] = Results
 
