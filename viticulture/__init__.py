@@ -6,7 +6,9 @@ from viticulture.grape import Grape
 from viticulture.wine import  Wine
 from viticulture.wine_order import WineOrder
 from viticulture.wine_order_deck import WineOrderDeck
+from viticulture.player import  Player
 
+# Enumerations
 from viticulture.viticulture_constants import GrapeType
 from viticulture.viticulture_constants import FieldType
 from viticulture.viticulture_constants import WineType
@@ -20,4 +22,4 @@ VP_THRESHOLD = 20
 # Define import *
 __all__ = ["Grape", "Wine", "WineOrder", "WineOrderDeck", "Field", "WineCellar",
            "CrushPad", "GrapeType", "FieldType", "WineType", "CellarType",
-           "MAX_GRADE", "MAX_GRADE", "VP_THRESHOLD"]
+           "Player", "MAX_GRADE", "MAX_GRADE", "VP_THRESHOLD"]

@@ -1,14 +1,10 @@
-from ViticultureConstants import *
-import Solver
-from WineOrderDeck import WineOrderDeck
-from Player import Player
-from Field import  Field
-from WineOrder import WineOrder
-from Wine import Wine
-import json
-import time
-from collections import defaultdict
 import copy
+from collections import defaultdict
+
+from viticulture import Wine, WineOrder, WineOrderDeck, FieldType, Field, WineType
+
+import Solver
+from viticulture.player import Player
 
 
 def DebugPlay(FieldMap, WineDeck, OptLevel):
