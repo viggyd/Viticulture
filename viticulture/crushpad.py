@@ -1,7 +1,7 @@
-from viticulture import Grape, GrapeType
 import collections
+from viticulture import Grape
 
-class CrushPad:
+class CrushPad(object):
 
     def __init__(self):
 

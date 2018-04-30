@@ -1,12 +1,18 @@
+"""Viticulture Wine Cellar
+
+This module contains all functions and attributes to maintain a player's wine
+cellar over the course of the game.
+"""
+
 from viticulture import Wine, WineType, CellarType, GrapeType
 
 class WineCellar:
     """A player's wine cellar. Stores and ages wines.
 
     Attributes:
-        cellar (list(list)): A 2-D list of the wine types along with the wines currently in the cellar.
-        size (CellarType): Current size of the wine cellar (small, medium, large)
-
+        Cellar (list(list)): A 2-D list of the wine types along with the wines currently in the cellar.
+        Size (CellarType): Current size of the wine cellar (small, medium, large)
+        CurrMaxGrade (int): The current maximum grade of wine that can be stored in the cellar
     """
 
     def __init__(self):
