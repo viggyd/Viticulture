@@ -93,6 +93,66 @@ def Simulate(WineDeckFile, FieldParamPath, ResultPath):
 
 
 
+def Simulate_SameDeck(WineDeckFile, FieldParamPath, ResultPath):
+
+    # WineDeck = WineOrderDeck("wine_def.csv")
+    WineDeck = WineOrderDeck(WineDeckFile)
+
+    NumSim = 1500
+    OptLevel = 1
+
+    FileMap = {}
+
+    for filename in os.listdir(FieldParamPath):
+
+        FieldParams = GenerateFieldsParameterFromFile(FieldParamPath + filename)
+        FieldMap = GenerateFieldMapFromParameters(FieldParams)
+
+        Parameters = {
+            "Fields": FieldParams,
+            "Optimization": OptLevel
+        }
+
+        OutName = GenerateResultsNameFromParameters(Parameters)
+
+        FileMap[filename] = {
+            "FieldParams" : FieldParams,
+            "FieldMap" : FieldMap,
+            "Parameters" : Parameters,
+            "OutName" : OutName
+        }
+
+
+    # [{
+    #   Simulation : 1,
+    #   Results :
+    #     {
+    #     File1 : Results,
+    #     File2 : Results
+    #     }
+    #   }, ...
+
+    for i in range(NumSim):
+
+        WineDeck.ReshuffleDeck()
+
+        ResultsDict = {}
+        for filename in os.listdir(FieldParamPath):
+
+
+
+            Results = viticulture_monte_carlo.Play(FileMap[filename]["FieldMap"], WineDeck, OptLevel)
+
+            ResultsDict[i] = Results
+
+        SimulationLog = {
+            "Parameters": FileMap[filename]["Parameters"],
+            "Results": ResultsDict
+        }
+
+        with open(ResultPath + FileMap["OutName"], 'w') as f:
+            f.write(json.dumps(SimulationLog, indent=2))
+
 
 
 

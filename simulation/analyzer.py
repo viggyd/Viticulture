@@ -15,6 +15,7 @@ import numpy
 from collections import Counter, defaultdict
 
 
+
 def parse_results_files(ResultsPath):
 
     ResultsList = []
@@ -108,6 +109,7 @@ if __name__ == '__main__':
 
     color_array = numpy.zeros(shape=(8, 7))
     std_array = numpy.empty(shape=(8, 7), dtype=object)
+    res_array = numpy.empty(shape=(8, 7), dtype=str)
 
     color_dict = {}
 
@@ -126,7 +128,10 @@ if __name__ == '__main__':
 
         color_array[int((test["y"]-7)/-2)][int((test["x"]+6)/2)] = test["mean_years"]
         std_array[int((test["y"] - 7) / -2)][int((test["x"] + 6) / 2)] = \
-            "{0:0.2f} ± {1:0.2f}".format(test["mean_years"], test["std_years"])
+            "{0:0.2f} +- {1:0.2f}".format(test["mean_years"], test["std_years"])
+
+
+
 
     # Divide each element by the max
     # We do the 1 -, because we prefer lower years to higher ones
@@ -147,16 +152,28 @@ if __name__ == '__main__':
     i = ax.imshow(color_array, cmap='YlGn_r', interpolation='nearest')
     fig.colorbar(i)
 
-    fig.savefig("heat_map.eps", format="eps", dpi=1000)
+    # fig.savefig("heat_map.eps", format="eps", dpi=1000)
 
-    print(param_x)
-    print(param_y)
-    print(param_c)
-    print(param_std)
-    print()
-    print(color_array)
-    print(std_array)
+    # print(param_x)
+    # print(param_y)
+    # print(param_c)
+    # print(param_std)
+    # print()
+    # print(color_array)
+    # print(std_array)
 
+    print("")
+
+    for row in std_array:
+        for col in row:
+
+            # print("{0:20s}".format(col))
+            print "{0:20s} ".format(col),
+
+        print("")
 
     # plt.legend(loc='upper left')
     plt.show()
+
+
+
